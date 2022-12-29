@@ -1,0 +1,31 @@
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[package]
+name = "elem"
+version = "0.1.0"
+authors = ["Fuwn <contact@fuwn.me>"]
+edition = "2021"
+description = "Logitech Battery Level Tray Indicator"
+readme = "README.md"
+homepage = "https://github.com/Fuwn/elem"
+repository = "https://github.com/Fuwn/elem"
+license = "GPL-3.0-only"
+keywords = ["logitech", "g-hub", "battery"]
+
+# Slower builds, faster executables
+[profile.release]
+lto = "fat"
+codegen-units = 1
+opt-level = 3
+
+[dependencies]
+url = "2.3.1"
+serde_json = "1.0.91"
+serde = "1.0.151"
+serde_derive = "1.0.151"
+lodepng = "3.7.2"
+image = "0.24.5"
+tao = { version = "0.15.8", features = ["tray"] }
+tungstenite = "0.18.0"
+pretty_env_logger = "0.4.0"
+log = "0.4.17"
