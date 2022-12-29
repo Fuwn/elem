@@ -6,9 +6,20 @@
 
 Show your wireless Logitech devices battery levels in your system tray.
 
-The name comes from the hungarian word for battery: elem.
+The name comes from the Hungarian word for battery: elem.
 
 ## Usage
+
+### Installing from [crates.io](https://crates.io)
+
+To install from [crates.io](https://crates.io) you must have
+[Rust](https://www.rust-lang.org/) installed.
+
+```shell
+cargo install elem --force
+```
+
+### Downloading a Prebuilt Binary
 
 To start using elem, download and execute the latest executable from the
 releases page:
