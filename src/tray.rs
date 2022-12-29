@@ -21,6 +21,7 @@ use tao::{
   event::Event, event_loop::ControlFlow, menu, menu::CustomMenuItem,
   system_tray, system_tray::Icon,
 };
+use winapi::um::{wincon::GetConsoleWindow, winuser, winuser::ShowWindow};
 
 const DEFAULT_UPDATE_FREQUENCY: u64 = 60000;
 
@@ -241,6 +242,9 @@ impl Tray {
       menu
     });
 
+    let mut log_window =
+      tray_menu.add_item(menu::MenuItemAttributes::new("Show Log Window"));
+    let mut log_window_state = false;
     let quit = tray_menu.add_item(menu::MenuItemAttributes::new("Quit"));
     let system_tray = Arc::new(Mutex::new(
       system_tray::SystemTrayBuilder::new(
@@ -266,67 +270,97 @@ impl Tray {
     event_loop.run(move |event, _event_loop, control_flow| {
       *control_flow = ControlFlow::Wait;
 
-      if let Event::MenuEvent {
-        menu_id,
-        origin: menu::MenuType::ContextMenu,
-        ..
-      } = event
-      {
-        if menu_id == quit.clone().id() {
-          info!("quitting");
+      match event {
+        Event::MenuEvent {
+          menu_id,
+          origin: menu::MenuType::ContextMenu,
+          ..
+        } => {
+          if menu_id == quit.clone().id() {
+            info!("quitting");
 
-          *control_flow = ControlFlow::Exit;
-        }
+            *control_flow = ControlFlow::Exit;
+          }
 
-        // Checking to see if a new device was selected
-        //
-        // If a new device was selected, update the icon and update the menu
-        // accordingly.
-        if devices.iter().any(|d| d.clone().id() == menu_id) {
-          for device in &mut devices {
-            if menu_id == device.clone().id() {
-              debug!("selected device: {}", device.clone().title());
-              device.set_selected(true);
-              // Ellipsis icon to indicate background process
-              system_tray
-                .lock()
-                .unwrap()
-                .set_icon(Self::force_icon("80085"));
-              trace!("updating system tray icon from intent");
+          if menu_id == log_window.clone().id() {
+            if log_window_state {
+              unsafe { ShowWindow(GetConsoleWindow(), winuser::SW_HIDE) };
 
-              // If the selected device is the dummy device, set a dummy icon
-              if device.0.title() == "Dummy (Debug)" {
-                system_tray
-                  .lock()
-                  .unwrap()
-                  .set_icon(Self::force_icon("43770"));
-              } else {
-                system_tray
-                  .lock()
-                  .unwrap()
-                  .set_icon(Self::icon(&Some(device.0.title())));
-              }
+              log_window.set_title("Show Log Window");
+              trace!("hiding log window from intent");
 
-              trace!("updated system tray icon from intent");
-              system_tray.lock().unwrap().set_tooltip(&format!(
-                "elem (updating {} from intent)",
-                device.0.title()
-              ));
-              local_self.lock().unwrap().selected_device_display_name =
-                Some(device.0.title());
-              system_tray
-                .lock()
-                .unwrap()
-                .set_tooltip(&format!("elem ({})", device.0.title()));
-              info!(
-                "completed device selection ({}) and associated tasks",
-                device.0.title()
-              );
+              log_window_state = false;
             } else {
-              device.set_selected(false);
+              unsafe { ShowWindow(GetConsoleWindow(), winuser::SW_SHOW) };
+
+              log_window.set_title("Hide Log Window");
+              trace!("showing log window from intent");
+
+              log_window_state = true;
+            }
+          }
+
+          // Checking to see if a new device was selected
+          //
+          // If a new device was selected, update the icon and update the menu
+          // accordingly.
+          if devices.iter().any(|d| d.clone().id() == menu_id) {
+            for device in &mut devices {
+              if menu_id == device.clone().id() {
+                debug!("selected device: {}", device.clone().title());
+                device.set_selected(true);
+                // Ellipsis icon to indicate background process
+                system_tray
+                  .lock()
+                  .unwrap()
+                  .set_icon(Self::force_icon("80085"));
+                trace!("updating system tray icon from intent");
+
+                // If the selected device is the dummy device, set a dummy icon
+                if device.0.title() == "Dummy (Debug)" {
+                  system_tray
+                    .lock()
+                    .unwrap()
+                    .set_icon(Self::force_icon("43770"));
+                } else {
+                  system_tray
+                    .lock()
+                    .unwrap()
+                    .set_icon(Self::icon(&Some(device.0.title())));
+                }
+
+                trace!("updated system tray icon from intent");
+                system_tray.lock().unwrap().set_tooltip(&format!(
+                  "elem (updating {} from intent)",
+                  device.0.title()
+                ));
+                local_self.lock().unwrap().selected_device_display_name =
+                  Some(device.0.title());
+                system_tray
+                  .lock()
+                  .unwrap()
+                  .set_tooltip(&format!("elem ({})", device.0.title()));
+                info!(
+                  "completed device selection ({}) and associated tasks",
+                  device.0.title()
+                );
+              } else {
+                device.set_selected(false);
+              }
             }
           }
         }
+        Event::TrayEvent { id, event, .. } => {
+          if id == main_tray_id
+            && event == tao::event::TrayEvent::LeftClick
+            && !log_window_state
+          {
+            unsafe { ShowWindow(GetConsoleWindow(), winuser::SW_SHOW) };
+
+            trace!("showing log window from tray event");
+          }
+        }
+        _ => {}
       }
     });
   }

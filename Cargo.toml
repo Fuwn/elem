@@ -2,7 +2,7 @@
 
 [package]
 name = "elem"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Fuwn <contact@fuwn.me>"]
 edition = "2021"
 description = "Logitech Battery Level Tray Indicator"
@@ -19,13 +19,26 @@ codegen-units = 1
 opt-level = 3
 
 [dependencies]
-url = "2.3.1"
-serde_json = "1.0.91"
+url = "2.3.1" # URL Implementation
+
+# Serialization
 serde = "1.0.151"
 serde_derive = "1.0.151"
+serde_json = "1.0.91"
+
+# Image Generation and Manipulation
 lodepng = "3.7.2"
 image = "0.24.5"
+
+# Event Loop and System Tray
 tao = { version = "0.15.8", features = ["tray"] }
+
+# WebSocket Client
 tungstenite = "0.18.0"
+
+# Logging
 pretty_env_logger = "0.4.0"
 log = "0.4.17"
+
+# Windows API
+winapi = { version = "0.3.9", features = ["winuser"] }

@@ -21,12 +21,12 @@
   unused,
   future_incompatible,
   rust_2018_idioms,
-  unsafe_code,
   clippy::all,
   clippy::nursery,
   clippy::pedantic
 )]
 #![recursion_limit = "128"]
+#![windows_subsystem = "windows"]
 
 mod ascii_art;
 mod logitech;
@@ -35,9 +35,15 @@ mod tray;
 #[macro_use]
 extern crate log;
 
+use winapi::{um, um::winuser};
+
 fn main() {
-  std::env::set_var("RUST_LOG", "elem=trace");
-  pretty_env_logger::init();
-  info!("starting elem");
-  tray::Tray::new(std::env::args().nth(1)).run();
+  unsafe {
+    um::consoleapi::AllocConsole();
+    winuser::ShowWindow(um::wincon::GetConsoleWindow(), winuser::SW_HIDE);
+    std::env::set_var("RUST_LOG", "elem=trace");
+    pretty_env_logger::init();
+    info!("starting elem");
+    tray::Tray::new(std::env::args().nth(1)).run();
+  }
 }

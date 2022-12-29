@@ -399,7 +399,7 @@ checksum = "90e5c1c8368803113bf0c9584fc495a58b86dc8a29edbf8fe877d21d9507e797"
 
 [[package]]
 name = "elem"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "image",
  "lodepng",
@@ -411,6 +411,7 @@ dependencies = [
  "tao",
  "tungstenite",
  "url",
+ "winapi",
 ]
 
 [[package]]
