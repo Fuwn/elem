@@ -6,6 +6,8 @@
 
 Show your wireless Logitech devices battery levels in your system tray.
 
+![](https://host.fuwn.me/pu6x50p8v2yt.gif)
+
 The name comes from the Hungarian word for battery: elem.
 
 ## Usage
