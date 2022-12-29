@@ -93,8 +93,8 @@ using these steps:
 1. Find the width of the ASCII art
 2. Strip the newline characters so that the entire ASCII art is on one line
 3. Iterate over each character in the ASCII art, writing the corresponding
-   pixel value to an image buffer: 0 0 0 0 for an empty pixel and 255 255 255
-   255 for a filled pixel (red, green, blue, alpha).
+   pixel value to an image buffer: `0 0 0 0` for an empty pixel and `255 255 255
+   255` for a filled pixel (red, green, blue, alpha).
 4. Save the image buffer to memory and use it as the icon for the tray
    indicator. :)
 
