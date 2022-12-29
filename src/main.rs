@@ -35,12 +35,28 @@ mod tray;
 #[macro_use]
 extern crate log;
 
-use winapi::{um, um::winuser};
+use winapi::{
+  um,
+  um::{wincon, winuser},
+};
 
 fn main() {
   unsafe {
     um::consoleapi::AllocConsole();
-    winuser::ShowWindow(um::wincon::GetConsoleWindow(), winuser::SW_HIDE);
+
+    winuser::SetWindowLongPtrW(
+      wincon::GetConsoleWindow(),
+      winuser::GWL_STYLE,
+      #[allow(clippy::cast_possible_wrap)]
+      {
+        winuser::GetWindowLongPtrW(
+          wincon::GetConsoleWindow(),
+          winuser::GWL_STYLE,
+        ) & !winuser::WS_SYSMENU as isize
+      },
+    );
+
+    winuser::ShowWindow(wincon::GetConsoleWindow(), winuser::SW_HIDE);
     std::env::set_var("RUST_LOG", "elem=trace");
     pretty_env_logger::init();
     info!("starting elem");
