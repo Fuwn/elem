@@ -20,6 +20,8 @@ use std::collections::HashMap;
 use serde_derive::{Deserialize, Serialize};
 use tungstenite::{client::IntoClientRequest, Message};
 
+use crate::tray::quit;
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DeviceInfo {
   pub id: String,
@@ -90,22 +92,31 @@ impl Device {
 fn connection() -> tungstenite::WebSocket<
   tungstenite::stream::MaybeTlsStream<std::net::TcpStream>,
 > {
+  // This will never fail because the URL is hardcoded
   let url = url::Url::parse("ws://localhost:9010").unwrap();
 
   let (mut ws_stream, _) = tungstenite::connect({
+    // This will never fail because the URL is valid
     let mut request = url.into_client_request().unwrap();
 
     // https://github.com/snapview/tungstenite-rs/issues/279
     // https://github.com/snapview/tungstenite-rs/issues/145#issuecomment-713581499
+    //
+    // This unwrap will never fail either because we are parsing a hardcoded,
+    // known string
     request
       .headers_mut()
       .insert("Sec-WebSocket-Protocol", "json".parse().unwrap());
 
     request
   })
-  .unwrap();
+  .unwrap_or_else(|_| {
+    quit("failed to connect to the logitech g hub websocket. is it running?");
+  });
 
-  ws_stream.read_message().unwrap();
+  ws_stream.read_message().unwrap_or_else(|_| {
+    quit("failed to read message from the logitech g hub websocket");
+  });
 
   ws_stream
 }
@@ -122,8 +133,12 @@ pub fn wireless_devices() -> HashMap<String, DeviceInfo> {
       })
       .to_string(),
     ))
-    .unwrap();
+    .unwrap_or_else(|_| {
+      quit("failed to write message to the logitech g hub websocket");
+    });
 
+  // This will never fail because if we even got this far, the `WebSocket` is
+  // working.
   let devices = serde_json::from_value::<DeviceList>(
     serde_json::from_str(&stream.read_message().unwrap().into_text().unwrap())
       .unwrap(),
@@ -166,14 +181,21 @@ pub fn device(display_name: &str) -> Device {
 
   stream
     .write_message(Message::binary(
+      // The `unwrap` for `get` should never fail because we know the devices that
+      // are available, and if the user unplugs one of their devices mid-battery state check,
+      // that's on them. :P
       serde_json::json!({
         "path": format!("/battery/{}/state", wireless_devices().get(display_name).unwrap().id),
         "verb": "GET"
       })
       .to_string(),
     ))
-    .unwrap();
+    .unwrap_or_else(|_| {
+      quit("failed to write message to the logitech g hub websocket");
+    });
 
+  // Once again, this should never fail because if we even got this far, the
+  // `WebSocket` is working.
   serde_json::from_value::<Device>(
     serde_json::from_str(&stream.read_message().unwrap().into_text().unwrap())
       .unwrap(),

@@ -15,7 +15,12 @@
 // Copyright (C) 2022-2022 Fuwn <contact@fuwn.me>
 // SPDX-License-Identifier: GPL-3.0-only
 
-use std::sync::{Arc, Mutex};
+use std::{
+  ffi::OsStr,
+  iter::once,
+  os::windows::ffi::OsStrExt,
+  sync::{Arc, Mutex},
+};
 
 use tao::{
   event::Event, event_loop::ControlFlow, menu, menu::CustomMenuItem,
@@ -79,17 +84,22 @@ impl Tray {
   ///
   /// Useful for displaying informational icons
   fn force_icon(code: &str) -> Icon {
-    trace!("building forced icon: {}", code);
+    trace!("building forced icon '{}'", code);
 
     let image = image::load_from_memory(&crate::ascii_art::number_to_image(
+      // This will never fail because we as the author provide a code that is
+      // always a number in string form.
       code.parse().unwrap(),
     ))
-    .unwrap()
+    .unwrap_or_else(|_| quit(&format!("failed to load forced icon '{code}'")))
     .into_rgba8();
     let (width, height) = image.dimensions();
-    let icon = Icon::from_rgba(image.into_raw(), width, height).unwrap();
+    let icon =
+      Icon::from_rgba(image.into_raw(), width, height).unwrap_or_else(|_| {
+        quit(&format!("failed to convert forced icon '{code}' to rgba"))
+      });
 
-    trace!("built forced icon: {}", code);
+    trace!("built forced icon '{}'", code);
 
     icon
   }
@@ -97,7 +107,7 @@ impl Tray {
   /// Create a tray icon compatible icon from a devices battery level
   fn icon(selected_device_display_name: &Option<String>) -> Icon {
     trace!(
-      "building icon for display name: {:?}",
+      "building icon for display name '{:?}'",
       selected_device_display_name
     );
 
@@ -117,13 +127,24 @@ impl Tray {
         .percentage(),
       )
     })
-    .unwrap()
+    .unwrap_or_else(|_| {
+      quit(&format!(
+        "failed to load icon for display name '{:?}'",
+        selected_device_display_name
+      ))
+    })
     .into_rgba8();
     let (width, height) = image.dimensions();
-    let icon = Icon::from_rgba(image.into_raw(), width, height).unwrap();
+    let icon =
+      Icon::from_rgba(image.into_raw(), width, height).unwrap_or_else(|_| {
+        quit(&format!(
+          "failed to convert icon for display name '{:?}' to rgba",
+          selected_device_display_name
+        ))
+      });
 
     trace!(
-      "built icon for display name: {:?}",
+      "built icon for display name '{:?}'",
       selected_device_display_name
     );
 
@@ -217,7 +238,12 @@ impl Tray {
 
       // Making sure that the last device, the default device, is never the
       // dummy device
+      //
+      // There will always be a last device because the dummy device is always
+      // present.
       if devices.last().unwrap().display_name == "Dummy (Debug)" {
+        // We can always pop the last device because there will always be a
+        // last element even if there is only one.
         let last = devices.pop().unwrap();
 
         devices.insert(0, last);
@@ -254,7 +280,7 @@ impl Tray {
       .with_id(main_tray_id)
       .with_tooltip("elem")
       .build(&event_loop)
-      .unwrap(),
+      .unwrap_or_else(|_| self::quit("failed to build system tray")),
     ));
     let mut devices = local_self.lock().unwrap().devices.clone();
     let icon_self = self.inner.clone();
@@ -307,7 +333,7 @@ impl Tray {
           if devices.iter().any(|d| d.clone().id() == menu_id) {
             for device in &mut devices {
               if menu_id == device.clone().id() {
-                debug!("selected device: {}", device.clone().title());
+                debug!("selected device '{}'", device.clone().title());
                 device.set_selected(true);
                 // Ellipsis icon to indicate background process
                 system_tray
@@ -363,5 +389,36 @@ impl Tray {
         _ => {}
       }
     });
+  }
+}
+
+pub fn quit(message: &str) -> ! {
+  message_box(message);
+  panic!("{}", message);
+}
+
+pub fn message_box(
+  // title: &str,
+  message: &str, // buttons: u32, icon: u32
+) -> i32 {
+  let buttons = winuser::MB_OK;
+  let icon = winuser::MB_ICONEXCLAMATION;
+  let other_options = winuser::MB_SETFOREGROUND | winuser::MB_TOPMOST;
+
+  unsafe {
+    winuser::MessageBoxW(
+      std::ptr::null_mut(),
+      OsStr::new(message)
+        .encode_wide()
+        .chain(once(0))
+        .collect::<Vec<u16>>()
+        .as_ptr(),
+      OsStr::new("elem") // title
+        .encode_wide()
+        .chain(once(0))
+        .collect::<Vec<u16>>()
+        .as_ptr(),
+      buttons | icon | other_options,
+    )
   }
 }
