@@ -37,7 +37,7 @@ tao = { version = "0.15.8", features = ["tray"] }
 tungstenite = "0.18.0"
 
 # Logging
-pretty_env_logger = "0.4.0"
+pretty_env_logger = "0.5.0"
 log = "0.4.17"
 
 # Windows API
