@@ -19,7 +19,7 @@ codegen-units = 1
 opt-level = 3
 
 [dependencies]
-url = "2.3.1" # URL Implementation
+url = "2.5.0" # URL Implementation
 
 # Serialization
 serde = "1.0.157"
