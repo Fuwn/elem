@@ -27,7 +27,7 @@ serde_derive = "1.0.157"
 serde_json = "1.0.94"
 
 # Image Generation and Manipulation
-lodepng = "3.7.2"
+lodepng = "3.10.1"
 image = "0.24.5"
 
 # Event Loop and System Tray
