@@ -24,7 +24,7 @@ url = "2.3.1" # URL Implementation
 # Serialization
 serde = "1.0.157"
 serde_derive = "1.0.157"
-serde_json = "1.0.94"
+serde_json = "1.0.116"
 
 # Image Generation and Manipulation
 lodepng = "3.7.2"
