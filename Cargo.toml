@@ -28,7 +28,7 @@ serde_json = "1.0.94"
 
 # Image Generation and Manipulation
 lodepng = "3.7.2"
-image = "0.24.5"
+image = "0.25.0"
 
 # Event Loop and System Tray
 tao = { version = "0.15.8", features = ["tray"] }
