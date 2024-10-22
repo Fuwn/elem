@@ -22,8 +22,8 @@ opt-level = 3
 url = "2.3.1" # URL Implementation
 
 # Serialization
-serde = "1.0.157"
-serde_derive = "1.0.157"
+serde = "1.0.200"
+serde_derive = "1.0.200"
 serde_json = "1.0.94"
 
 # Image Generation and Manipulation
