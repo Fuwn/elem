@@ -31,7 +31,7 @@ lodepng = "3.7.2"
 image = "0.24.5"
 
 # Event Loop and System Tray
-tao = { version = "0.15.8", features = ["tray"] }
+tao = { version = "0.34.0", features = ["tray"] }
 
 # WebSocket Client
 tungstenite = "0.18.0"
